@@ -3,12 +3,19 @@ package gov.nist.hit.impl;
 import gov.nist.hit.MessageParser;
 import gov.nist.hit.core.domain.Message;
 import gov.nist.hit.core.domain.TestContext;
+import gov.nist.hit.utils.XMLUtils;
 import org.apache.commons.io.IOUtils;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,9 +41,9 @@ public class XMLMessageParser implements MessageParser {
         DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
         Document doc = docBuilder.parse(IOUtils.toInputStream(message.getContent()));
         for(String key : dataToBeFound){
-            NodeList nodeList = doc.getElementsByTagName(key);
-            if(nodeList.getLength()>0){
-                dataRead.put(key,nodeList.item(0).getTextContent());
+            Node node = XMLUtils.getNodeByNameOrXPath(key,doc);
+            if(node!=null) {
+                dataRead.put(key, node.getTextContent());
             }
         }
         return dataRead;

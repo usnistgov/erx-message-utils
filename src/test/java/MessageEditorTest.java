@@ -1,8 +1,16 @@
+import com.mifmif.common.regex.Generex;
 import gov.nist.hit.MessageIdFinder;
 import gov.nist.hit.MessageTypeFinder;
+import gov.nist.hit.core.domain.Message;
+import gov.nist.hit.core.service.edi.EDIMessageParserImpl;
+import gov.nist.hit.core.xml.domain.XMLTestContext;
+import gov.nist.hit.impl.XMLMessageEditor;
+import gov.nist.hit.utils.XMLUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -12,15 +20,32 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  * Created by mcl1 on 1/19/16.
  */
 public class MessageEditorTest {
+
+    @Test
+    public void testRegex() {
+        int i = 0;
+        while (i < 20) {
+            String regex = "PH([0-9]){3}";
+            Generex generex = new Generex(regex);
+            String data = generex.random();
+            System.out.println(data);
+            i++;
+        }
+    }
 
     String xmlMessage = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
             "<Message xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" version=\"010\" release=\"006\" xmlns=\"http://www.ncpdp.org/schema/SCRIPT\">" +
@@ -231,43 +256,48 @@ public class MessageEditorTest {
             "UIT+59338+9'\n" +
             "UIZ++1'";
 
+
     @Test
-    public void testXMLEdit() throws ParserConfigurationException, IOException, SAXException, TransformerException {
+    public void testEdiEdit(){
+        EDIMessageParserImpl ediMessageParser = new EDIMessageParserImpl();
+        //ediMessageParser.parse(ediMessage)
+    }
 
-        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-        Document doc = docBuilder.parse(IOUtils.toInputStream(xmlMessage));
-        NodeList sentTimes = doc.getElementsByTagName("SentTime");
-        if (sentTimes.getLength() == 1) {
-            String sentTime = sentTimes.item(0).getTextContent();
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat();
-            simpleDateFormat.applyPattern("yyyymmdd");
-
-            sentTimes.item(0).setTextContent(simpleDateFormat.format(new Date()));
+    @Test
+    public void testXMLEditor() throws ParserConfigurationException, IOException, SAXException, TransformerException {
+        XMLMessageEditor xmlMessageEditor = new XMLMessageEditor();
+        gov.nist.hit.core.domain.Message message = new Message();
+        message.setContent(xmlMessage);
+        HashMap<String,String> toBeReplaced = new HashMap<>();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat();
+        simpleDateFormat.applyPattern("yyyymmdd");
+        toBeReplaced.put("/Message/Header/SentTime",simpleDateFormat.format(new Date()));
+        try {
+            String editedMessage = xmlMessageEditor.replaceInMessage(message,toBeReplaced,new XMLTestContext());
+            System.out.println(editedMessage);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-        StreamResult result = new StreamResult(new StringWriter());
-        DOMSource source = new DOMSource(doc);
-        transformer.transform(source, result);
-
-        String xmlString = result.getWriter().toString();
-
-        System.out.println(xmlString);
-
-        MessageTypeFinder messageTypeFinder = MessageTypeFinder.getInstance();
-        String type = messageTypeFinder.findXmlMessageType(xmlMessage);
-        System.out.println(type);
-
     }
 
-    @Test
+    private String printNodeList(NodeList nodeList){
+        String s = "";
+        for(int i = 0;i < nodeList.getLength();i++){
+            Node n = nodeList.item(i);
+            s+=n.getNodeName()+"\n";
+            if(n.getChildNodes().getLength()>0){
+                s+=printNodeList(n.getChildNodes());
+            }
+        }
+        return s;
+    }
+
+    /*@Test
     public void testEdiIdFinder() {
-            String id =   MessageIdFinder.findEdiMessageId(ediMessage);
-            MessageTypeFinder messageTypeFinder = MessageTypeFinder.getInstance();
+        String id = MessageIdFinder.findEdiMessageId(ediMessage);
+        MessageTypeFinder messageTypeFinder = MessageTypeFinder.getInstance();
         String type = messageTypeFinder.findEdiMessageType(ediMessage);
-        System.out.println(type+" - "+id);
-    }
+        System.out.println(type + " - " + id);
+    }*/
 
 }
