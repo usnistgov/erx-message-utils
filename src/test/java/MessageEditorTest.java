@@ -1,51 +1,22 @@
-import com.mifmif.common.regex.Generex;
-import gov.nist.hit.MessageIdFinder;
-import gov.nist.hit.MessageTypeFinder;
 import gov.nist.hit.core.domain.Message;
-import gov.nist.hit.core.service.edi.EDIMessageParserImpl;
 import gov.nist.hit.core.xml.domain.XMLTestContext;
 import gov.nist.hit.impl.XMLMessageEditor;
-import gov.nist.hit.utils.XMLUtils;
-import org.apache.commons.io.IOUtils;
+import gov.nist.hit.impl.XMLMessageParser;
+import org.junit.Assert;
 import org.junit.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
+import javax.xml.transform.TransformerException;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by mcl1 on 1/19/16.
  */
 public class MessageEditorTest {
-
-    @Test
-    public void testRegex() {
-        int i = 0;
-        while (i < 20) {
-            String regex = "PH([0-9]){3}";
-            Generex generex = new Generex(regex);
-            String data = generex.random();
-            System.out.println(data);
-            i++;
-        }
-    }
 
     String xmlMessage = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
             "<Message xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" version=\"010\" release=\"006\" xmlns=\"http://www.ncpdp.org/schema/SCRIPT\">" +
@@ -53,6 +24,13 @@ public class MessageEditorTest {
             "        <To Qualifier=\"P\">RECIPIENT_ID</To>" +
             "        <From Qualifier=\"D\">SENDER_ID</From>" +
             "        <MessageID>90927</MessageID>" +
+            "        <SentTime>2015-11-20T14:15:23</SentTime>" +
+            "        <PrescriberOrderNumber>ORDMU201</PrescriberOrderNumber>" +
+            "    </Header>" +
+            "    <Header>" +
+            "        <To Qualifier=\"P\">RECIPIENT_ID</To>" +
+            "        <From Qualifier=\"D\">SENDER_ID</From>" +
+            "        <MessageID>ABCDEF</MessageID>" +
             "        <SentTime>2015-11-20T14:15:23</SentTime>" +
             "        <PrescriberOrderNumber>ORDMU201</PrescriberOrderNumber>" +
             "    </Header>" +
@@ -256,48 +234,45 @@ public class MessageEditorTest {
             "UIT+59338+9'\n" +
             "UIZ++1'";
 
-
-    @Test
-    public void testEdiEdit(){
-        EDIMessageParserImpl ediMessageParser = new EDIMessageParserImpl();
-        //ediMessageParser.parse(ediMessage)
-    }
-
     @Test
     public void testXMLEditor() throws ParserConfigurationException, IOException, SAXException, TransformerException {
         XMLMessageEditor xmlMessageEditor = new XMLMessageEditor();
         gov.nist.hit.core.domain.Message message = new Message();
         message.setContent(xmlMessage);
         HashMap<String,String> toBeReplaced = new HashMap<>();
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat();
-        simpleDateFormat.applyPattern("yyyymmdd");
-        toBeReplaced.put("/Message/Header/SentTime",simpleDateFormat.format(new Date()));
+        toBeReplaced.put("/Message/Header/MessageID","1234567890");
+        toBeReplaced.put("NCPDPID","DLDRPZ");
+        toBeReplaced.put("/Message/Body/NewRx/Pharmacy/Identification/NPI","QWERTYUIOP");
         try {
             String editedMessage = xmlMessageEditor.replaceInMessage(message,toBeReplaced,new XMLTestContext());
-            System.out.println(editedMessage);
+            XMLMessageParser xmlMessageParser = new XMLMessageParser();
+            message.setContent(editedMessage);
+            Map<String,String> data = xmlMessageParser.readInMessage(message, new ArrayList(toBeReplaced.keySet()), null);
+            for(String key : toBeReplaced.keySet()){
+                Assert.assertEquals(toBeReplaced.get(key), data.get(key));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private String printNodeList(NodeList nodeList){
-        String s = "";
-        for(int i = 0;i < nodeList.getLength();i++){
-            Node n = nodeList.item(i);
-            s+=n.getNodeName()+"\n";
-            if(n.getChildNodes().getLength()>0){
-                s+=printNodeList(n.getChildNodes());
-            }
+        @Test
+        public void testXMLParser()  {
+                XMLMessageParser xmlMessageParser = new XMLMessageParser();
+                gov.nist.hit.core.domain.Message message = new Message();
+                message.setContent(xmlMessage);
+                HashMap<String,String> toBeFoundWithValue = new HashMap<>();
+                toBeFoundWithValue.put("/Message/Header/MessageID","90927");
+                toBeFoundWithValue.put("NCPDPID","1629900");
+                toBeFoundWithValue.put("/Message/Body/NewRx/Pharmacy/Identification/NPI","3030000003");
+                try {
+                        Map<String,String> data = xmlMessageParser.readInMessage(message, new ArrayList(toBeFoundWithValue.keySet()), null);
+                        for(String key : toBeFoundWithValue.keySet()){
+                                Assert.assertEquals(toBeFoundWithValue.get(key), data.get(key));
+                        }
+                } catch (Exception e) {
+                        e.printStackTrace();
+                }
         }
-        return s;
-    }
-
-    /*@Test
-    public void testEdiIdFinder() {
-        String id = MessageIdFinder.findEdiMessageId(ediMessage);
-        MessageTypeFinder messageTypeFinder = MessageTypeFinder.getInstance();
-        String type = messageTypeFinder.findEdiMessageType(ediMessage);
-        System.out.println(type + " - " + id);
-    }*/
 
 }
