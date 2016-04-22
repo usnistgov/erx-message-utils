@@ -40,10 +40,10 @@ public class XMLMessageParser implements MessageParser {
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
         Document doc = docBuilder.parse(IOUtils.toInputStream(message.getContent()));
-        for(String key : dataToBeFound){
-            Node node = XMLUtils.getNodeByNameOrXPath(key,doc);
-            if(node!=null) {
-                dataRead.put(key, node.getTextContent());
+        for(String key : dataToBeFound) {
+            NodeList nodes = XMLUtils.getNodesByNameOrXPath(key, doc);
+            if (nodes != null && nodes.getLength() > 0) {
+                dataRead.put(key, nodes.item(0).getTextContent());
             }
         }
         return dataRead;

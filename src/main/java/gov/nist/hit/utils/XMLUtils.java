@@ -24,19 +24,19 @@ import javax.xml.xpath.XPathFactory;
  * Created by Maxence Lefort on 3/3/16.
  */
 public class XMLUtils {
-    public static Node getNodeByNameOrXPath(String nameOrXPath,Document doc) {
+    public static NodeList getNodesByNameOrXPath(String nameOrXPath,Document doc) {
         if (!nameOrXPath.contains("/")) {
             NodeList nodeList = doc.getElementsByTagName(nameOrXPath);
             if (nodeList.getLength() > 0) {
-                return nodeList.item(0);
+                return nodeList;
             }
         } else {
             XPath xPath = XPathFactory.newInstance().newXPath();
             NodeList nodes = null;
             try {
                 nodes = (NodeList) xPath.evaluate(nameOrXPath, doc.getDocumentElement(), XPathConstants.NODESET);
-                if (nodes != null && nodes.getLength() > 0) {
-                    return nodes.item(0);
+                if (nodes != null) {
+                    return nodes;
                 }
             } catch (XPathExpressionException e) {
                 e.printStackTrace();

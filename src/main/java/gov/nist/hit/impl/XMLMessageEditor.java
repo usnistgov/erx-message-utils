@@ -33,13 +33,16 @@ public class XMLMessageEditor implements MessageEditor {
         if(context instanceof XMLTestContext){
             //XMLTestContext xmlTestContext = (XMLTestContext) context;
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            docFactory.setNamespaceAware(true);
+            //TODO : remove quickfix and find out why XPATH are not working when parser is namespace aware
+            //docFactory.setNamespaceAware(true);
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
             Document doc = docBuilder.parse(IOUtils.toInputStream(message.getContent()));
             for(String key : idNewValueMap.keySet()){
-                Node node = XMLUtils.getNodeByNameOrXPath(key,doc);
-                if(node!=null){
-                    node.setTextContent(idNewValueMap.get(key));
+                NodeList nodes = XMLUtils.getNodesByNameOrXPath(key, doc);
+                if(nodes!=null){
+                    for(int i=0;i<nodes.getLength();i++){
+                        nodes.item(i).setTextContent(idNewValueMap.get(key));
+                    }
                 }
             }
             Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -47,7 +50,8 @@ public class XMLMessageEditor implements MessageEditor {
             StreamResult result = new StreamResult(new StringWriter());
             DOMSource source = new DOMSource(doc);
             transformer.transform(source, result);
-            return result.getWriter().toString();
+            //TODO remove this quick fix
+            return result.getWriter().toString().replace(" xmlns=\"\"","");
 
         }
         throw new MessageParserException("TestContext must be an instance of XMLTestContext ("+context.getClass().getName()+" found instead)");
