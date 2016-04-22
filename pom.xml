@@ -38,6 +38,11 @@
             <artifactId>generex</artifactId>
             <version>0.0.4</version>
         </dependency>
+        <dependency>
+            <groupId>gov.nist.hit.core</groupId>
+            <artifactId>hit-core-domain</artifactId>
+            <version>1.0.6-SNAPSHOT</version>
+        </dependency>
     </dependencies>
     <build>
         <pluginManagement>
