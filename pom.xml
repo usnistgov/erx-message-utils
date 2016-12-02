@@ -41,7 +41,7 @@
         <dependency>
             <groupId>gov.nist.hit.core</groupId>
             <artifactId>hit-core-domain</artifactId>
-            <version>1.0.14-SNAPSHOT</version>
+            <version>1.0.18-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
