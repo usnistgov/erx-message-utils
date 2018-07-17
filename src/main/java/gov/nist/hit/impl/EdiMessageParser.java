@@ -28,6 +28,6 @@ public class EdiMessageParser implements MessageParser {
     @Override
     public Map<String,String> readInMessage(Message message, ArrayList<String> dataToBeFound, TestContext context) throws Exception {
         hl7.v2.instance.Message parsedMessage = EDIMessageUtil.parseMessage(message, context);
-        return JavaConverters.mapAsJavaMapConverter(parsedMessage.getDataFromMessage(scala.collection.JavaConversions.asScalaIterable(dataToBeFound).toList())).asJava();
+        return JavaConverters.mapAsJavaMapConverter(parsedMessage.getDataFromMessage(scala.collection.JavaConversions.collectionAsScalaIterable(dataToBeFound).toList())).asJava();
     }
 }

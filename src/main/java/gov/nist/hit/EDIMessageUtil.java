@@ -24,7 +24,7 @@ public class EDIMessageUtil {
         if (context instanceof EDITestContext) {
             EDITestContext testContext = (EDITestContext) context;
             String ediMessage = message.getContent();
-            String profileXml = testContext.getConformanceProfile().getIntegrationProfile().getXml();
+            String profileXml = testContext.getConformanceProfile().getXml();
             if (profileXml == null) {
                 throw new MessageParserException("No Conformance Profile Provided to Parse the Message");
             }

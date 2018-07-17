@@ -51,8 +51,13 @@ public class XMLMessageEditor implements MessageEditor {
             DOMSource source = new DOMSource(doc);
             transformer.transform(source, result);
             //TODO remove this quick fix
-            return result.getWriter().toString().replace(" xmlns=\"\"","");
-
+            String populatedMessage = result.getWriter().toString();
+            if(!populatedMessage.contains("xmlns=\"http://www.ncpdp.org/schema/SCRIPT\"")){
+                String originalHeader = "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"";
+                String newHeader = "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"  xmlns=\"http://www.ncpdp.org/schema/SCRIPT\"";
+                populatedMessage = populatedMessage.replace(originalHeader,newHeader);
+            }
+            return populatedMessage;
         }
         throw new MessageParserException("TestContext must be an instance of XMLTestContext ("+context.getClass().getName()+" found instead)");
     }
